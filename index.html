@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HIEM — High-fidelity Engineering that Moves</title>
+  <meta name="description" content="HIEM is an advanced GitHub Copilot engineering agent built on the Kilo CLI platform. GitHub-native PR review, issue triage, CI/CD diagnosis, and more." />
+  <link rel="canonical" href="https://hiem.dev" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>" />
+  <style>
+    /* ── Reset & base ──────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:       #0a0a0f;
+      --bg2:      #12121a;
+      --bg3:      #1a1a2e;
+      --accent:   #00d4ff;
+      --accent2:  #7c3aed;
+      --text:     #e8e8f0;
+      --muted:    #8888aa;
+      --border:   #2a2a3e;
+      --green:    #22c55e;
+      --red:      #f43f5e;
+      --yellow:   #fbbf24;
+      --radius:   12px;
+      --font:     system-ui, -apple-system, sans-serif;
+      --mono:     'SFMono-Regular', 'Fira Code', 'Cascadia Code', monospace;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── Typography ────────────────────────────────────────────────────── */
+    h1, h2, h3 { line-height: 1.2; }
+    h1 { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 800; letter-spacing: -0.02em; }
+    h2 { font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 700; margin-bottom: 1rem; }
+    h3 { font-size: 1.1rem; font-weight: 600; color: var(--accent); margin-bottom: .5rem; }
+    p { color: var(--muted); margin-bottom: 1rem; }
+    code {
+      font-family: var(--mono);
+      background: var(--bg3);
+      padding: .2em .45em;
+      border-radius: 6px;
+      font-size: .9em;
+      color: var(--accent);
+      border: 1px solid var(--border);
+    }
+    pre {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      overflow-x: auto;
+      margin-bottom: 1.5rem;
+    }
+    pre code {
+      background: transparent;
+      border: none;
+      padding: 0;
+      color: var(--text);
+      font-size: .875rem;
+      line-height: 1.7;
+    }
+
+    /* ── Layout ────────────────────────────────────────────────────────── */
+    .container { max-width: 960px; margin: 0 auto; padding: 0 1.5rem; }
+    section { padding: 5rem 0; }
+    section:nth-child(even) { background: var(--bg2); }
+
+    /* ── Header ────────────────────────────────────────────────────────── */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(10,10,15,.8);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: .875rem 0;
+    }
+    header .container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      font-weight: 800;
+      font-size: 1.15rem;
+      letter-spacing: -0.03em;
+      color: var(--text);
+    }
+    .logo span { color: var(--accent); }
+    nav a {
+      color: var(--muted);
+      font-size: .875rem;
+      margin-left: 1.5rem;
+      transition: color .15s;
+    }
+    nav a:hover { color: var(--text); text-decoration: none; }
+
+    /* ── Hero ──────────────────────────────────────────────────────────── */
+    .hero {
+      text-align: center;
+      padding: 8rem 0 6rem;
+      position: relative;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0,212,255,.12), transparent),
+                  radial-gradient(ellipse 60% 40% at 80% 100%, rgba(124,58,237,.08), transparent);
+      pointer-events: none;
+    }
+    .hero-tag {
+      display: inline-block;
+      background: rgba(0,212,255,.1);
+      border: 1px solid rgba(0,212,255,.25);
+      color: var(--accent);
+      font-size: .75rem;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: .35rem .9rem;
+      border-radius: 999px;
+      margin-bottom: 1.5rem;
+    }
+    .hero h1 {
+      margin-bottom: 1.25rem;
+      background: linear-gradient(135deg, var(--text) 0%, var(--accent) 60%, var(--accent2) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-subtitle {
+      font-size: 1.15rem;
+      color: var(--muted);
+      max-width: 560px;
+      margin: 0 auto 2.5rem;
+    }
+    .cta-row { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .7rem 1.4rem;
+      border-radius: 8px;
+      font-size: .9rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: transform .15s, opacity .15s;
+      text-decoration: none;
+    }
+    .btn:hover { transform: translateY(-1px); text-decoration: none; }
+    .btn-primary { background: var(--accent); color: #000; }
+    .btn-secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
+    .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+
+    /* ── Badge row ─────────────────────────────────────────────────────── */
+    .badge-row {
+      display: flex;
+      gap: .75rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 3rem;
+      color: var(--muted);
+      font-size: .8rem;
+    }
+    .badge {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      padding: .3rem .75rem;
+      border-radius: 999px;
+      font-family: var(--mono);
+      font-size: .75rem;
+    }
+
+    /* ── Grid ──────────────────────────────────────────────────────────── */
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+    .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; }
+
+    /* ── Cards ─────────────────────────────────────────────────────────── */
+    .card {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      transition: border-color .2s;
+    }
+    .card:hover { border-color: var(--accent); }
+    .card-icon { font-size: 1.75rem; margin-bottom: .75rem; }
+    .card h3 { font-size: 1rem; font-weight: 600; margin-bottom: .5rem; }
+    .card p  { font-size: .875rem; color: var(--muted); }
+
+    /* ── Commands table ────────────────────────────────────────────────── */
+    .cmd-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .875rem;
+    }
+    .cmd-table thead tr { border-bottom: 1px solid var(--border); }
+    .cmd-table th { text-align: left; color: var(--muted); padding: .6rem .75rem; font-weight: 500; }
+    .cmd-table td { padding: .65rem .75rem; border-bottom: 1px solid var(--border); }
+    .cmd-table tr:last-child td { border-bottom: none; }
+    .cmd { font-family: var(--mono); color: var(--accent); white-space: nowrap; }
+    .desc { color: var(--muted); }
+
+    /* ── Axioms ────────────────────────────────────────────────────────── */
+    .axiom {
+      display: flex;
+      gap: 1rem;
+      align-items: flex-start;
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .axiom:last-child { border-bottom: none; }
+    .axiom-num {
+      font-family: var(--mono);
+      font-size: .7rem;
+      background: rgba(0,212,255,.12);
+      color: var(--accent);
+      border-radius: 6px;
+      padding: .25rem .5rem;
+      flex-shrink: 0;
+      margin-top: .15rem;
+    }
+    .axiom-text strong { color: var(--text); display: block; margin-bottom: .2rem; }
+    .axiom-text em  { color: var(--muted); font-style: normal; font-size: .9rem; }
+
+    /* ── Phase strip ───────────────────────────────────────────────────── */
+    .phase-strip {
+      display: flex;
+      gap: 0;
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      margin-bottom: 2rem;
+    }
+    .phase {
+      flex: 1;
+      padding: 1rem 1.25rem;
+      text-align: center;
+      position: relative;
+    }
+    .phase:not(:last-child)::after {
+      content: '›';
+      position: absolute;
+      right: -2px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--border);
+      font-size: 1.2rem;
+    }
+    .phase-num  { font-size: .65rem; font-family: var(--mono); color: var(--accent); text-transform: uppercase; letter-spacing: .08em; }
+    .phase-name { font-weight: 700; font-size: .85rem; margin: .2rem 0; }
+    .phase-desc { font-size: .75rem; color: var(--muted); }
+
+    /* ── Security table ────────────────────────────────────────────────── */
+    .sec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+    .sec-item {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: .85rem 1rem;
+    }
+    .severity { font-size: .65rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; margin-bottom: .3rem; }
+    .severity.critical { color: var(--red); }
+    .severity.high     { color: var(--yellow); }
+    .sec-item code { font-size: .8rem; }
+
+    /* ── Checklist ─────────────────────────────────────────────────────── */
+    .checklist { list-style: none; }
+    .checklist li {
+      padding: .6rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: .9rem;
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+    }
+    .checklist li:last-child { border-bottom: none; }
+    .check { color: var(--accent); font-family: var(--mono); font-size: 1rem; }
+
+    /* ── Install ───────────────────────────────────────────────────────── */
+    .install-tabs { display: flex; gap: .5rem; margin-bottom: 1rem; }
+    .install-tab {
+      padding: .4rem 1rem;
+      border-radius: 6px;
+      font-size: .825rem;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      background: transparent;
+    }
+    .install-tab.active {
+      background: var(--accent);
+      color: #000;
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* ── Footer ────────────────────────────────────────────────────────── */
+    footer {
+      padding: 3rem 0;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      color: var(--muted);
+      font-size: .8rem;
+    }
+
+    /* ── Responsive ────────────────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      .phase-strip { flex-direction: column; }
+      .phase:not(:last-child)::after { display: none; }
+      .sec-grid { grid-template-columns: 1fr; }
+      nav a:not(:first-child) { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════ HEADER ═══════════════ -->
+<header>
+  <div class="container">
+    <div class="logo">HI<span>EM</span></div>
+    <nav>
+      <a href="#axioms">Axioms</a>
+      <a href="#phases">Phases</a>
+      <a href="#commands">CLI</a>
+      <a href="#security">Security</a>
+      <a href="#install">Install</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ═══════════════ HERO ═══════════════ -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-tag">Open Source · Kilo Platform · Engineering CLI</div>
+    <h1>High-fidelity Engineering<br>that Moves.</h1>
+    <p class="hero-subtitle">
+      Advanced GitHub Copilot engineering agent. PR review, issue triage,
+      CI/CD diagnosis, release management — every edit is the best it can be.
+    </p>
+    <div class="cta-row">
+      <a href="#install" class="btn btn-primary">Install CLI →</a>
+      <a href="#commands" class="btn btn-secondary">View Commands</a>
+      <a href="https://github.com/BoozeLee/hiem" class="btn btn-ghost">GitHub ↗</a>
+    </div>
+    <div class="badge-row">
+      <span class="badge">gh auth</span>
+      <span class="badge">Click + Rich</span>
+      <span class="badge">REST API</span>
+      <span class="badge">Python 3.10+</span>
+      <span class="badge">MIT</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ AXIOMS ═══════════════ -->
+<section id="axioms">
+  <div class="container">
+    <h2>7 Core Axioms</h2>
+    <div class="card">
+      <div class="axiom">
+        <div class="axiom-num">01</div>
+        <div class="axiom-text"><strong>Correctness before cleverness</strong><em>If a simpler solution is provably correct, use it.</em></div>
+      </div>
+      <div class="axiom">
+        <div class="axiom-num">02</div>
+        <div class="axiom-text"><strong>Security is mandatory</strong><em>Every new surface area is a threat surface. Treat it that way.</em></div>
+      </div>
+      <div class="axiom">
+        <div class="axiom-num">03</div>
+        <div class="axiom-text"><strong>Delete fluently</strong><em>No commented-out code. No <code>// TODO: remove later</code>. Remove it now.</em></div>
+      </div>
+      <div class="axiom">
+        <div class="axiom-num">04</div>
+        <div class="axiom-text"><strong>YAGNI ruthlessly</strong><em>Abstractions need at least <strong>two</strong> call-sites today.</em></div>
+      </div>
+      <div class="axiom">
+        <div class="axiom-num">05</div>
+        <div class="axiom-text"><strong>One PR, one intent</strong><em>Refactor + bug-fix + feature = three PRs, not one.</em></div>
+      </div>
+      <div class="axiom">
+        <div class="axiom-num">06</div>
+        <div class="axiom-text"><strong>Readable &gt; brief</strong><em>Spell-out names; abbreviations for <code>id</code>, <code>url</code>, <code>ctx</code> only.</em></div>
+      </div>
+      <div class="axiom">
+        <div class="axiom-num">07</div>
+        <div class="axiom-text"><strong>APIs are contracts</strong><em>Changing a public signature breaks every importer. Version bump first.</em></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ PHASES ═══════════════ -->
+<section id="phases">
+  <div class="container">
+    <h2>Phase Discipline</h2>
+    <p>Before touching any line of code, execute all five phases in order.</p>
+    <div class="phase-strip">
+      <div class="phase" style="background:rgba(0,212,255,.06)">
+        <div class="phase-num">Phase 1</div>
+        <div class="phase-name">Ground truth</div>
+        <div class="phase-desc">Read before writing · Trace call chain · Check tests · History</div>
+      </div>
+      <div class="phase" style="background:rgba(124,58,237,.06)">
+        <div class="phase-num">Phase 2</div>
+        <div class="phase-name">Design &amp; plan</div>
+        <div class="phase-desc">One-paragraph plan · Todo tracking · Split large changes</div>
+      </div>
+      <div class="phase" style="background:rgba(34,197,94,.06)">
+        <div class="phase-num">Phase 3</div>
+        <div class="phase-name">Implement</div>
+        <div class="phase-desc">Smallest correct change · Type-check · Tests · Commit</div>
+      </div>
+      <div class="phase" style="background:rgba(251,191,36,.06)">
+        <div class="phase-num">Phase 4</div>
+        <div class="phase-name">Verify</div>
+        <div class="phase-desc">Full suite · Linter · Diff scan · Threat-model</div>
+      </div>
+      <div class="phase" style="background:rgba(244,63,94,.06)">
+        <div class="phase-num">Phase 5</div>
+        <div class="phase-name">Cleanup</div>
+        <div class="phase-desc">Remove debug · Unused · Dead code · Update docs</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ CLI COMMANDS ═══════════════ -->
+<section id="commands">
+  <div class="container">
+    <h2>CLI Commands</h2>
+    <p>Authenticated through the existing <code>gh</code> session. No extra tokens needed.</p>
+    <div style="overflow-x:auto">
+      <table class="cmd-table">
+        <thead>
+          <tr>
+            <th>Command</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="cmd">hiem whoami</td>      <td class="desc">Show authenticated identity &amp; session info</td></tr>
+          <tr><td class="cmd">hiem settings</td>    <td class="desc">HiEM CLI and gh session configuration</td></tr>
+          <tr><td class="cmd">hiem doc</td>         <td class="desc">Print the full HIEM engineering prompt</td></tr>
+          <tr><td class="cmd">hiem pr list</td>     <td class="desc">List pull requests (open/closed/all)</td></tr>
+          <tr><td class="cmd">hiem pr review N</td> <td class="desc">Structured HIEM-grade PR review</td></tr>
+          <tr><td class="cmd">hiem pr merge N</td>  <td class="desc">Merge PR after review approval</td></tr>
+          <tr><td class="cmd">hiem pr close N</td>  <td class="desc">Close PR without merging</td></tr>
+          <tr><td class="cmd">hiem issue list</td>  <td class="desc">List issues for the current repo</td></tr>
+          <tr><td class="cmd">hiem issue triage N</td><td class="desc">Codebase scan + structured triage</td></tr>
+          <tr><td class="cmd">hiem ci runs</td>     <td class="desc">Recent GitHub Actions workflow runs</td></tr>
+          <tr><td class="cmd">hiem ci watch N</td>  <td class="desc">Watch a running workflow</td></tr>
+          <tr><td class="cmd">hiem ci rerun N</td>  <td class="desc">Rerun a workflow run</td></tr>
+          <tr><td class="cmd">hiem release create</td><td class="desc">Create a GitHub release</td></tr>
+          <tr><td class="cmd">hiem release notes</td><td class="desc">Show last release vs HEAD</td></tr>
+          <tr><td class="cmd">hiem run workflow</td><td class="desc">Dispatch a workflow file</td></tr>
+          <tr><td class="cmd">hiem search Q</td>    <td class="desc">Search GitHub code / issues / repos</td></tr>
+          <tr><td class="cmd">hiem label list</td>  <td class="desc">List all labels for the current repo</td></tr>
+          <tr><td class="cmd">hiem branch clean</td><td class="desc">Delete merged local &amp; remote branches</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ SECURITY ═══════════════ -->
+<section id="security">
+  <div class="container">
+    <h2>Security Guardrails</h2>
+    <p>Always flagged in diffs. Never written silently.</p>
+    <div class="sec-grid">
+      <div class="sec-item">
+        <div class="severity critical">Critical</div>
+        <code>sk_</code> <code>AKIA</code> <code>-----BEGIN PRIVATE KEY-----</code>
+        <br/><small style="color:var(--muted)">Hardcoded credentials</small>
+      </div>
+      <div class="sec-item">
+        <div class="severity critical">Critical</div>
+        <code>eval()</code> <code>new Function()</code> <code>exec()</code>
+        <br/><small style="color:var(--muted)">Dynamic code execution</small>
+      </div>
+      <div class="sec-item">
+        <div class="severity critical">Critical</div>
+        <code>+ sql</code> string concatenation
+        <br/><small style="color:var(--muted)">SQL injection — use parameterised queries</small>
+      </div>
+      <div class="sec-item">
+        <div class="severity critical">Critical</div>
+        JWT without <code>exp</code>/<code>nbf</code> or algorithm enforcement
+        <br/><small style="color:var(--muted)">Token bypass</small>
+      </div>
+      <div class="sec-item">
+        <div class="severity high">High</div>
+        <code>CORS *</code> in production
+        <br/><small style="color:var(--muted)">Permissive CORS origin</small>
+      </div>
+      <div class="sec-item">
+        <div class="severity high">High</div>
+        <code>dangerouslySetInnerHTML</code> / unsanitised HTML
+        <br/><small style="color:var(--muted)">XSS injection vector</small>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ INSTALL ═══════════════ -->
+<section id="install">
+  <div class="container">
+    <h2>Install HIEM</h2>
+    <div class="install-tabs">
+      <button class="install-tab active" onclick="showTab('pip')">uv (pip)</button>
+      <button class="install-tab" onclick="showTab('npm')">npm</button>
+      <button class="install-tab" onclick="showTab('cargo')">cargo</button>
+    </div>
+    <div id="tab-pip">
+      <pre><code>uv tool install hiem</code></pre>
+    </div>
+    <div id="tab-npm" style="display:none">
+      <pre><code>npm install -g @hiem/cli
+hiem --version</code></pre>
+    </div>
+    <div id="tab-cargo" style="display:none">
+      <pre><code>cargo install hiem-cli
+hiem --version</code></pre>
+    </div>
+    <p style="font-size:.85rem; margin-top:1.5rem">
+      Requires <code>gh</code> (GitHub CLI) authenticated. Run <code>gh auth login</code> first.
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════ CHECKLIST ═══════════════ -->
+<section>
+  <div class="container">
+    <h2>Pre-Close Self-Check</h2>
+    <p>Before marking any task complete, silently verify each box.</p>
+    <ul class="checklist">
+      <li><span class="check">☐</span> Read every affected file, not only the ones edited</li>
+      <li><span class="check">☐</span> Type-check + test + lint in sequence</li>
+      <li><span class="check">☐</span> Baseline test results captured</li>
+      <li><span class="check">☐</span> No stale <code>console.log</code> / <code>dbg!</code> / commented-out code</li>
+      <li><span class="check">☐</span> Public API documentation added or updated</li>
+      <li><span class="check">☐</span> Every security finding in the diff called out</li>
+      <li><span class="check">☐</span> CHANGELOG updated for user-facing changes</li>
+      <li><span class="check">☐</span> Principal-engineer-ready — would sign without amendments</li>
+    </ul>
+    <p style="font-size:.85rem; color:var(--muted); margin-top:.75rem">
+      Any unchecked box means go back and fill it before closing.
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════ FOOTER ═══════════════ -->
+<footer>
+  <div class="container">
+    <p><strong>HIEM — High-fidelity Engineering that Moves</strong></p>
+    <p style="margin-top:.5rem">
+      <a href="https://github.com/BoozeLee/hiem" style="color:var(--muted)">GitHub ↗</a>
+      &nbsp;·&nbsp;
+      <a href="https://kilocode.ai"  style="color:var(--muted)">Kilo Platform</a>
+      &nbsp;·&nbsp;
+      <a href="#install"            style="color:var(--muted)">Install</a>
+    </p>
+  </div>
+</footer>
+
+<!-- ═══════════════ JS ═══════════════ -->
+<script>
+function showTab(name) {
+  document.querySelectorAll('.install-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('[id^="tab-"]').forEach(p => p.style.display = 'none');
+  event.target.classList.add('active');
+  document.getElementById('tab-' + name).style.display = 'block';
+}
+</script>
+</body>
+</html>
